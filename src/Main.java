@@ -4,7 +4,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 public class Main {
@@ -67,36 +70,34 @@ public class Main {
         } 
     } 
 	
+	public static void main(String[] args) {
+		solve();
+	}
+	
+
+	
+	static class Node{
+		char c;
+		int index;
+		Node(char c,int i){
+			this.c=c;
+			this.index=i;
+		}
+	}
 	
 	private static void solve() {
 		
 		FastReader fr=new FastReader(); 
-		int t;
-		t=fr.nextInt();
-		List<String> ans= new ArrayList<String> (t);
+		int t=fr.nextInt();
+		List<Integer> ans = new ArrayList<Integer>();
 		while(t>0) {
-			String s=fr.next();
-			if(s.length()==2) {
-				ans.add(s);
-			}
-			else {
-				StringBuilder sb=new StringBuilder();
-				sb.append(s.charAt(0));
-				for(int i=2;i<s.length();i+=2) {
-					sb.append(s.charAt(i));
-				}
-				sb.append(s.charAt(s.length()-1));
-				ans.add(sb.toString());
-			}
+
 			--t;
-			
 		}
+		
 		ans.forEach((s)->System.out.println(s));
 	}
 
-	public static void main(String[] args) {
-		solve();
-
-	}
+	
 
 }
