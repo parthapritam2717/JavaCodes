@@ -4,10 +4,15 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.StringTokenizer;
 
-public class Main {
+public class A {
 	
 	
 	static class FastReader 
@@ -70,17 +75,9 @@ public class Main {
 	public static void main(String[] args) {
 		solve();
 	}
-	
 
 	
-	static class Node{
-		char c;
-		int index;
-		Node(char c,int i){
-			this.c=c;
-			this.index=i;
-		}
-	}
+	
 	
 	private static void solve() {
 		
@@ -88,13 +85,18 @@ public class Main {
 		int t=fr.nextInt();
 		List<Integer> ans = new ArrayList<Integer>();
 		while(t>0) {
-
+			int n;
+			n=fr.nextInt();
+			for(int i=1;i<=n;++i) {
+				System.out.print(i+" ");
+			}
+			System.out.println();
 			--t;
 		}
-		
 		ans.forEach((s)->System.out.println(s));
 	}
-
+	
 	
 
+	
 }

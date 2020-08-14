@@ -1,15 +1,19 @@
-package com.javacodes;
+
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 
-
-
-public class FastIo {
+class Test2 {
+	
 	
 	static class Reader 
     { 
@@ -140,9 +144,70 @@ public class FastIo {
 	
 	
 	private static void solve() throws IOException{
-				
-				Reader fr=new Reader(); 
-				
+		
+		Reader fr=new Reader(); 
+		int t=fr.nextInt();
+		List<Integer> ans = new ArrayList<Integer>();
+		while(t>0) {
+			int n,k;
+			n=fr.nextInt();
+			k=fr.nextInt();
+			int family[]=new int[n];
+			for(int i=0;i<n;++i) {
+				family[i]=fr.nextInt();
+			}
+			int dp[]=new int[n+1];
+			Arrays.fill(dp, -1);
+			
+			Map<Integer,Integer> hm=new HashMap<Integer,Integer>();
+			//hm.put(family[n-1], 1);
+			
+			int minCost= getCost(n,family,k,k,hm,dp);
+			ans.add(minCost);
+			
+			--t;
 		}
+		StringBuilder res=new StringBuilder();
+		ans.forEach((s)->res.append(Integer.toString(s)+"\n"));
+		System.out.println(res.toString());
+	}
+
+	
+	
+	private static int getCost(int i,int family[],int k,int totalCost,Map<Integer,Integer> hm,int dp[]) {
+		
+		if(i==0)
+			return totalCost;
+		
+		
+		//if(dp)
+		
+		if(hm.containsKey(family[i-1])) {
+			hm.put(family[i-1], hm.get(family[i-1])+1);
+			int costIncluded;
+			if(hm.get(family[i-1])>2) {
+				costIncluded=getCost(i-1,family,k,totalCost+1,hm,dp);
+			}
+			else {
+				costIncluded=getCost(i-1,family,k,totalCost+2,hm,dp);
+			}
+					
+			Map<Integer,Integer> hmap=new HashMap<Integer,Integer>();
+			hmap.put(family[i-1], 1);
+			
+			int costNewTable=getCost(i-1,family,k,totalCost+k,hmap,dp);
+			
+			
+			return Math.min(costIncluded, costNewTable);
+			
+		}
+		else {
+			hm.put(family[i-1], 1);
+			return getCost(i-1,family,k,totalCost,hm,dp);
+		}
+		
+	}
+	
+	
 
 }

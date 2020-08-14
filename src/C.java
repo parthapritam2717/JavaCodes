@@ -4,10 +4,15 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.StringTokenizer;
 
-public class Main {
+public class C {
 	
 	
 	static class FastReader 
@@ -70,31 +75,43 @@ public class Main {
 	public static void main(String[] args) {
 		solve();
 	}
-	
 
 	
-	static class Node{
-		char c;
-		int index;
-		Node(char c,int i){
-			this.c=c;
-			this.index=i;
+	private static long getfact(int n) {
+		long fact=1;
+		int mod=1000000007;
+		for(long i=1;i<=n;++i) {
+			fact=(fact*i)%mod;
 		}
+		return fact;
+	}
+	
+	
+	private static long pow(int n) {
+		long p=1;
+		int mod=1000000007;
+		while(n>0) {
+			p=(p*2)%mod;
+			--n;
+		}
+		return p;
 	}
 	
 	private static void solve() {
 		
 		FastReader fr=new FastReader(); 
-		int t=fr.nextInt();
-		List<Integer> ans = new ArrayList<Integer>();
-		while(t>0) {
-
-			--t;
-		}
+		int n=fr.nextInt();
+		long fact=getfact(n);
+		long pw=pow(n-1);
+		int mod=1000000007;
+		System.out.println((fact%mod-pw%mod+mod)%mod);
 		
-		ans.forEach((s)->System.out.println(s));
+		
+		
+		
 	}
-
+	
 	
 
+	
 }

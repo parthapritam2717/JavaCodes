@@ -1,15 +1,17 @@
-package com.javacodes;
+
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.StringTokenizer;
 
-
-
-public class FastIo {
+class Chef2 {
+	
 	
 	static class Reader 
     { 
@@ -140,9 +142,105 @@ public class FastIo {
 	
 	
 	private static void solve() throws IOException{
-				
-				Reader fr=new Reader(); 
-				
+		
+		Reader fr=new Reader(); 
+		int t=fr.nextInt();
+		//List<Integer> ans = new ArrayList<Integer>();
+		while(t>0) {
+			
+			int n=fr.nextInt();
+			List<List<Integer>> graph= new ArrayList<List<Integer>> ();
+			for(int i=0;i<=n;++i) {
+				graph.add(new ArrayList<Integer>());
+			}
+			for(int i=0;i<n-1;++i) {
+				int u=fr.nextInt();
+				int v=fr.nextInt();
+				graph.get(u).add(v);
+				graph.get(v).add(u);
+			}
+			int permutation[]=new int[n];
+			for(int i=0;i<n;++i) {
+				permutation[i]=fr.nextInt();
+			}
+			int population[]=new int[n+1];
+			for(int i=1;i<=n;++i) {
+				population[i]=fr.nextInt();
+			}
+			int fruits[]=new int[n+1];
+			for(int i=1;i<=n;++i) {
+				fruits[i]=fr.nextInt();
+			}
+			
+			solveGraph(graph,permutation,population,fruits,n);
+			
+			--t;
+			
 		}
+		//ans.forEach((s)->System.out.println(s));
+	}
+	
+	private static void solveGraph(List<List<Integer>> graph,int permutation[],int population[],int fruits[],int n) {
+		int days[]=new int[n+1];
+		Arrays.fill(days, -1);
+		boolean completed[]=new boolean[n+1];
+		for(int i=0;i<n;++i) {
+			int source=permutation[i];
+			int sourcePop=population[source];
+			//if(fruits[source]!=0) {
+				//for all nodes reachable from source reduce the number of fruits by pop of source
+				fruits[source]-=Math.min(fruits[source], sourcePop);
+				if(fruits[source]==0 && days[source]==-1) {
+					days[source]=i+1;
+				}
+				List<Integer> list=graph.get(source);
+				boolean vis[]=new boolean[n+1];
+				vis[source]=true;
+				for(int j=0;j<list.size();++j) {
+					if(!vis[list.get(j)]) {
+						//vis[list.get(j)]=true;
+						dfs(graph,list.get(j),vis,days,sourcePop,fruits,i+1,completed);
+						//int v=list.get(j);
+//						graph.get(source).remove(v);
+//						graph.get(v).remove(source);
+						
+					}
+				}
+				completed[source]=true;
 
+		}
+		
+		StringBuilder ans= new StringBuilder();
+		
+		
+		for(int i=1;i<=n;++i) {
+			
+			ans.append(Integer.toString(days[i])+" ");
+			
+		}
+		System.out.println(ans.toString());
+		
+	}
+	
+	private static void dfs(List<List<Integer>> graph,int index,boolean vis[],int days[],int pop,int fruits[],int dayCount,boolean completed[]) {
+		vis[index]=true;
+		if(completed[index])
+			return;
+		
+		//process this node
+		fruits[index]-=Math.min(fruits[index], pop);
+		if(fruits[index]==0 && days[index]==-1){
+			days[index]=dayCount;
+		}
+		List<Integer> list=graph.get(index);
+		for(int i=0;i<list.size();++i) {
+			if(!vis[list.get(i)]) {
+				dfs(graph,list.get(i),vis,days,pop,fruits,dayCount,completed);
+			}
+		}
+	}
+	
+	
 }
+	
+	
