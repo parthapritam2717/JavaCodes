@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 
-class Color3 {
+class ColorNode {
 	
 	
 	static class Reader 
@@ -178,17 +178,6 @@ class Color3 {
 			}
 		}
 	}
-	
-	private static class Unused{
-		long profit;
-		long linecount;
-		boolean used;
-		
-		Unused(int p,int n){
-			profit=p;
-			linecount=n;
-		}
-	}
 	private static void solve() throws IOException {
 		//ncrCalc();
 		Reader fr=new Reader(); 
@@ -223,77 +212,70 @@ class Color3 {
 				
 			}
 			int cost[]=new int[c];
-			boolean allcostEqual=false;
 			for(int i=0;i<c;++i) {
 				cost[i]=fr.nextInt();
 			}
 			
-			
-			
-//			if() {
-//				
-//			}else {
-				List<Node> list=new ArrayList<Node>(c+1);
-				long totalTriangles=0;
-				int maxFrequencyNode=0;
-
-				for(int i=1;i<=c;++i) {
-					Node newnode=new Node(i,cost[i-1],colorhm[i],colorSlopeMap.get(i));
-					if(colorhm[i]>=3 && cost[i-1]!=0 && cost[i-1]<=k && newnode.slopes.size()>=3) {
-						//newnode=new Node(i,cost[i-1],colorhm[i],colorSlopeMap.get(i));
-						list.add(newnode);
-						maxFrequencyNode=Math.max(maxFrequencyNode, colorhm[i]);
-						
-					}
-					if(colorhm[i]>=3 && cost[i-1]!=0 && newnode.slopes.size()>=3) {
-						totalTriangles+=getTotal(newnode);
-					}
-				}
-				
-				
-				
-				
-				if(k==0) {
-					ans.add(totalTriangles);
-					--t;
-					continue;
-				}
-//				boolean onecost=true;
-//				for(int i=1;i<list.size();++i) {
-//					if(list.get(i).cost!=list.get(i-1).cost) {
-//						onecost=false;
-//						break;
-//					}
-//				}
-				
-				 if(list.size()==0) {
-					ans.add((long) 0);
-				}
-				else{
-					long dp[][][]= new long[list.size()+1][k+1][maxFrequencyNode+1];
-					for(int i=1;i<=list.size();++i) {
-						for(int j=1;j<=k;j++) {
-							Arrays.fill(dp[i][j], -1);
-						}
-					}
-					long unused[][]=new long[list.size()+1][k+1];
-					for(int i=0;i<=list.size();++i) {
-						Arrays.fill(unused[i], -1);
-					}
-					long finalTrianglesReduced=knapsack(list,list.size(),k,dp,unused);
-					ans.add(totalTriangles-finalTrianglesReduced);
-				}
-			//}
 
 			
+			List<Node> list=new ArrayList<Node>(c+1);
+			long totalTriangles=0;
+			int maxFrequencyNode=0;
+
+			for(int i=1;i<=c;++i) {
+				Node newnode=new Node(i,cost[i-1],colorhm[i],colorSlopeMap.get(i));
+				if(colorhm[i]>=3 && cost[i-1]!=0 && cost[i-1]<=k) {
+					//newnode=new Node(i,cost[i-1],colorhm[i],colorSlopeMap.get(i));
+					list.add(newnode);
+					maxFrequencyNode=Math.max(maxFrequencyNode, colorhm[i]);
+					
+				}
+				if(colorhm[i]>=3 && cost[i-1]!=0) {
+					totalTriangles+=getTotal(newnode);
+				}
+				
+				
+			}
+//			for(int i=0;i<list.size();++i) {
+//				totalTriangles+=getTotal(list.get(i));
+//			}
 			
+			if(k==0) {
+				ans.add(totalTriangles);
+				--t;
+				continue;
+			}
+			
+			long dp[][]= new long[list.size()+1][k+1];
+
+			for(int i=0;i<=list.size();++i) {
+				//for(int j=0;j<=k;++j) {
+					Arrays.fill(dp[i], -1);
+				//}
+			}
+			
+			if(list.size()==1) {
+				if(list.get(0).count==list.get(0).slopes.size()) {
+					ans.add(getRemovedCountNoParallel(list.get(0).count,k,list.get(0).cost));
+				}
+				else {
+					ans.add(getRemovedCountParallel(list.get(0),k));
+				}
+			}
+			else if(list.size()==0) {
+				ans.add((long) 0);
+			}
+			else{
+				long finalTrianglesReduced=knapsack(list,list.size(),k,dp,0);
+				ans.add(totalTriangles-finalTrianglesReduced);
+			}
 			--t;
 		}
 		ans.forEach((s)->System.out.println(s));
 	}
 	
 	
-	private static long knapsack(List<Node> list,int index,int k,long dp[][][],long unused[][]) {
+	private static long knapsack(List<Node> list,int index,int k,long dp[][],long sum) {
 		
 		if(index==0 || k==0)
 			return 0;
@@ -301,12 +283,14 @@ class Color3 {
 		Node cur=list.get(index-1);
 		int tempF=cur.count;
 		
-		if(dp[index][k][cur.count]!=-1)
-			return dp[index][k][cur.count];
+		if(dp[index][k]!=-1) {
+			System.out.println("Found prev stored value at "+index+','+k+','+cur.count+'='+dp[index][k]+"Sum here="+sum);
+		}
+			//return dp[index][k];
 		
 		if(cur.cost>k || cur.count<3 || cur.slopes.size()<3) {
-			dp[index][k][cur.count]=knapsack(list,index-1,k,dp,unused);
-			return dp[index][k][cur.count];
+			dp[index][k]=knapsack(list,index-1,k,dp,sum);
+			return dp[index][k];
 			}
 		else {
 			long costCur=getCurrentProfit(cur);//getncr(cur.count, 3)-getncr(cur.count-1, 3);
@@ -320,7 +304,7 @@ class Color3 {
 				list.get(index-1).slopes.put(edgeDelete,list.get(index-1).slopes.get(edgeDelete)-1);
 			}
 			list.get(index-1).count=tempF-1;
-			long usedCount=costCur+knapsack(list,index,k-cur.cost,dp,unused);
+			long usedCount=costCur+knapsack(list,index,k-cur.cost,dp,sum+costCur);
 			list.get(index-1).count=tempF;
 			if(list.get(index-1).slopes.containsKey(edgeDelete)) {
 				list.get(index-1).slopes.put(edgeDelete,list.get(index-1).slopes.get(edgeDelete)+1);
@@ -328,16 +312,10 @@ class Color3 {
 			else {
 				list.get(index-1).slopes.put(edgeDelete,1);
 			}
-			long unusedCount=0;
-			if(unused[index][k]==-1) {
-				unusedCount=knapsack(list, index-1, k,dp,unused);
-				unused[index][k]=unusedCount;
-			}
-			else {
-				unusedCount=unused[index][k];
-			}
-			dp[index][k][cur.count]=Math.max(usedCount, unusedCount);
-			return dp[index][k][cur.count];
+			long unusedCount=knapsack(list, index-1, k,dp,sum);
+			dp[index][k]=Math.max(usedCount, unusedCount);
+			System.out.println("Found new stored value at "+index+','+k+','+cur.count+'='+dp[index][k]+"Sum here="+sum);
+			return dp[index][k];
 		}
 		
 	}
@@ -400,14 +378,6 @@ class Color3 {
 	}
 	
 	private static int findSmallestNumSlope(Node node) {
-		
-		if(node.count==node.slopes.size()) {
-			for(Map.Entry<Integer, Integer> entry:node.slopes.entrySet()) {
-				return entry.getKey();
-			}
-			
-		}
-		
 		int minSlope=-1;
 		int minSlopeCount=Integer.MAX_VALUE;
 		for(Map.Entry<Integer, Integer> entry:node.slopes.entrySet()) {

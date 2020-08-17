@@ -11,7 +11,8 @@ import java.util.Map;
 import java.util.PriorityQueue;
 
 
-class Color2 {
+
+class ColorCost1 {
 	
 	
 	static class Reader 
@@ -135,7 +136,7 @@ class Color2 {
         } 
     }  
 	
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws Exception {
 		solve();
 	}
 
@@ -145,13 +146,12 @@ class Color2 {
 		int cost;
 		int count;
 		Map<Integer,Integer> slopes;
+		long profit;
 		Node(int color,int cost,int count,Map<Integer,Integer> slopes){
 			this.color=color;
 			this.cost=cost;
 			this.count=count;
 			this.slopes=slopes;
-//			this.slopes=new HashMap<Integer, Integer>();
-//			this.slopes.putAll(slopes);
 		}
 		
 	}
@@ -180,19 +180,11 @@ class Color2 {
 		}
 	}
 	
-	private static class Unused{
-		long profit;
-		long linecount;
-		boolean used;
-		
-		Unused(int p,int n){
-			profit=p;
-			linecount=n;
-		}
-	}
-	private static void solve() throws IOException {
+
+	private static void solve() throws Exception {
 		//ncrCalc();
-		Reader fr=new Reader(); 
+		//try{
+			Reader fr=new Reader(); 
 		int t=fr.nextInt();
 		List<Long> ans = new ArrayList<Long>();
 		while(t>0) {
@@ -236,99 +228,268 @@ class Color2 {
 
 			for(int i=1;i<=c;++i) {
 				Node newnode=new Node(i,cost[i-1],colorhm[i],colorSlopeMap.get(i));
-				if(colorhm[i]>=3 && cost[i-1]!=0 && cost[i-1]<=k && newnode.slopes.size()>=3) {
-					//newnode=new Node(i,cost[i-1],colorhm[i],colorSlopeMap.get(i));
+				if(colorhm[i]>=3 && cost[i-1]!=0 ) {
 					list.add(newnode);
 					maxFrequencyNode=Math.max(maxFrequencyNode, colorhm[i]);
-					
-				}
-				if(colorhm[i]>=3 && cost[i-1]!=0 && newnode.slopes.size()>=3) {
+					newnode.profit=getCurrentProfit(newnode);
 					totalTriangles+=getTotal(newnode);
-				}
-				
+				}		
 				
 			}
-//			for(int i=0;i<list.size();++i) {
-//				totalTriangles+=getTotal(list.get(i));
-//			}
-			
 			if(k==0) {
 				ans.add(totalTriangles);
 				--t;
 				continue;
 			}
-			
-			long dp[][][]= new long[list.size()+1][k+1][maxFrequencyNode+1];
-			for(int i=1;i<=list.size();++i) {
-				for(int j=1;j<=k;j++) {
-					Arrays.fill(dp[i][j], -1);
+			else {
+				
+				//Now will have to create cost objects and  insert into the costpq
+				Map<Integer,List<Node>> temphm= new HashMap<Integer, List<Node>>();
+				for(Node node:list) {
+					if(temphm.containsKey(node.cost)) {
+						temphm.get(node.cost).add(node);
+					}
+					else {
+						List<Node> temp=new ArrayList<Node>();
+						temp.add(node);
+						temphm.put(node.cost, temp);
+					}
 				}
-			}
-
-			
-			long unused[][]=new long[list.size()+1][k+1];
-			for(int i=0;i<=list.size();++i) {
-				Arrays.fill(unused[i], -1);
-			}
-			
-			if(list.size()==1) {
-				if(list.get(0).count==list.get(0).slopes.size()) {
-					ans.add(getRemovedCountNoParallel(list.get(0).count,k,list.get(0).cost));
+				List<Cost> costlist=new ArrayList<Cost>();
+				int maxcount=0;
+				for(Map.Entry<Integer, List<Node>> entry:temphm.entrySet()) {
+					PriorityQueue<Node> temppq=new PriorityQueue<Node>((n1,n2)-> {
+						return Long.compare(n2.profit, n1.profit);
+					});
+					int count=0;
+					if(entry.getKey()>k) {
+						continue;
+					}
+					for(Node node:entry.getValue()) {
+						temppq.add(node);
+						count+=node.count;
+						maxcount=Math.max(maxcount, node.count);
+					}
+					maxcount=Math.max(maxcount,count);
+					Cost costnode=new Cost(entry.getKey(),temppq,count);
+					//costpq.add(costnode);
+					costlist.add(costnode);
 				}
-				else {
-					ans.add(getRemovedCountParallel(list.get(0),k));
+				//calculate(costpq,k,ans);
+				Dpdata dp[][]= new Dpdata[costlist.size()+1][3000+1];
+//				for(int j=1;j<=costlist.size();++j) {
+//					
+//						Arrays.fill(dp[j], -1);
+//					//}
+//				}
+				long unused[][]=new long[costlist.size()+1][k+1];
+				for(int i=1;i<=costlist.size();++i) {
+					Arrays.fill(unused[i], -1);
 				}
+				long removedTriangles=knapsack2(costlist,costlist.size(),k,dp,unused).value;
+				ans.add(totalTriangles-removedTriangles);
+				
 			}
-			else if(list.size()==0) {
-				ans.add((long) 0);
-			}
-			else{
-				long finalTrianglesReduced=knapsack(list,list.size(),k,dp,unused);
-				ans.add(totalTriangles-finalTrianglesReduced);
-			}
+			
+			
 			--t;
 		}
 		ans.forEach((s)->System.out.println(s));
+		
+		
+//		}catch (Exception e) {
+//			System.out.println(e);
+//		}
 	}
 	
 	
-	private static long knapsack(List<Node> list,int index,int k,long dp[][][],long unused[][]) {
-		
-		if(index==0 || k==0)
-			return 0;
-		
-		Node cur=list.get(index-1);
-		int tempF=cur.count;
-		
-		if(dp[index][k][cur.count]!=-1)
-			return dp[index][k][cur.count];
-		
-		if(cur.cost>k || cur.count<3 || cur.slopes.size()<3) {
-			dp[index][k][cur.count]=knapsack(list,index-1,k,dp,unused);
-			return dp[index][k][cur.count];
+	
+	
+	
+	static class Cost{
+		int cost;
+		PriorityQueue<Node> pq;
+		int count;
+		Cost(int cost,PriorityQueue<Node> pq,int c){
+			this.cost=cost;
+			this.pq=pq;
+			this.count=c;
+		}
+	}
+	
+	
+	private static int getSumSlopes(PriorityQueue<Node> pq) {
+		int sum=0;
+		for(Node node:pq) {
+			if(node.slopes.size()>2) {
+				sum++;
 			}
-		else {
-			long costCur=getCurrentProfit(cur);//getncr(cur.count, 3)-getncr(cur.count-1, 3);
+		}
+		return sum;
+		
+	}
+	
+	static class Dpdata{
+		int kvalue;
+		long val;
+		int samecount;
+		Cost cost;
+		long sameSum;
+		Dpdata(int k,long val,int sameCount,Cost cost,long sum){
+			this.kvalue=k;
+			this.val=val;
+			this.samecount=sameCount;
+			this.cost=cost;
+			this.sameSum=sum;
 			
-			int edgeDelete=reduceline(cur);
-			long usedCount=costCur+knapsack(list,index,k-cur.cost,dp,unused);
-			revertremovedLine(cur,edgeDelete);
-			long unusedCount=0;
-			if(unused[index][k]==-1) {
-				unusedCount=knapsack(list, index-1, k,dp,unused);
-				unused[index][k]=unusedCount;
-			}
-			else {
-				unusedCount=unused[index][k];
-			}
-			dp[index][k][cur.count]=Math.max(usedCount, unusedCount);
-			return dp[index][k][cur.count];
+		}
+		@Override
+		public String toString() {
+			return "K="+kvalue+','+"val="+val+","+"sameCount="+samecount;
+		}
+	}
+	
+	static class Pair{
+		long value;
+		boolean used;
+		int sameCount;
+		long samesum;
+		Pair(long v,boolean u,int s,long samesum){
+			value=v;
+			used=u;
+			sameCount=s;
+			this.samesum=samesum;
 		}
 		
+		
+	}
+	
+	private static Pair knapsack2(List<Cost> list,int index,int k,Dpdata dp[][],long unused[][]) throws Exception{
+		if(index==0 || k==0)
+			return new Pair(0, false, 0,0);
+		Cost cur=list.get(index-1);
+		
+		
+		if(dp[index][cur.count]!=null) {
+			//System.out.println("Found previous saved data"+index+","+cur.count+','+k+"="+dp[index][cur.count]);
+			//will do some calculation and return the data
+		
+			Dpdata d=dp[index][cur.count];
+			if(k==d.kvalue) {
+				return new Pair(dp[index][cur.count].val,dp[index][cur.count].samecount>0?true:false,dp[index][cur.count].samecount,dp[index][cur.count].sameSum); 
+			}
+			else if(k<d.kvalue){
+				int sameCountusedPrev=d.samecount;
+				if(sameCountusedPrev==0)
+					new Pair(dp[index][cur.count].val,dp[index][cur.count].samecount>0?true:false,dp[index][cur.count].samecount,dp[index][cur.count].sameSum); 
+				
+				int cost=cur.cost;
+				int ktillprev=d.kvalue-cost*sameCountusedPrev;
+				if(ktillprev<k){
+					int accomodatenow=(k-ktillprev)/cost;
+					long profitEarn=getProfitFromCostObject(d.cost,accomodatenow); //get the profit from removing these number of same objects
+				
+					long unuseddata=unused[index-1][ktillprev];
+					
+					return new Pair(profitEarn+unuseddata,accomodatenow>0?true:false,accomodatenow,profitEarn);
+				}
+								
+				 
+			}
+		}
+		
+			
+		
+		//int presentCount=cur.count;
+		//if(cur.cost>k || cur.count<3 || getSumSlopes(cur.pq)<1) {
+		if(cur.cost>k || cur.count<3 ) {
+			Pair res= knapsack2(list,index-1,k,dp,unused);
+			dp[index][cur.count]=new Dpdata(k, res.value, 0,cur,0);
+			return new Pair(res.value,false,0,0);
+		}
+		
+		//first lets see the unused
+		long unusedVal=0;
+		if(unused[index][k]!=-1) {
+			unusedVal=unused[index][k];
+		}
+		else {
+			unusedVal=knapsack2(list, index-1, k, dp,unused).value;
+			unused[index][k]=unusedVal;
+		}
+		
+		
+		//Now will have to do the operation for using
+		Node colorCluster=null;
+		long profitbyUsing=0;
+		int edgeDelete=0;
+		Pair ans=null;
+		try{
+			colorCluster=cur.pq.poll();
+			profitbyUsing=getCurrentProfit(colorCluster);
+			edgeDelete=reduceline(colorCluster);
+			cur.count--;
+			colorCluster.profit=getCurrentProfit(colorCluster);
+			cur.pq.add(colorCluster);
+			ans=knapsack2(list,index,k-cur.cost,dp,unused);
+			cur.count++;
+			revertremovedLine(colorCluster,edgeDelete);
+			
+		
+		
+		
+		//dp[index][cur.count]=Math.max(unusedVal, profitbyUsing+ans);	
+		
+		if(unusedVal>ans.value+profitbyUsing) {
+			dp[index][cur.count]=new Dpdata(k, unusedVal, 0,cur,0);
+		}
+		else {
+			dp[index][cur.count]=new Dpdata(k, ans.value+profitbyUsing, ans.sameCount+1,cur,ans.samesum+profitbyUsing);
+		}
+		
+		
+		//System.out.println("New saved data"+index+","+cur.count+','+k+"="+dp[index][cur.count]);
+		
+		}catch (Exception e) {
+			
+		}
+		
+		return new Pair(dp[index][cur.count].val,dp[index][cur.count].samecount>0?true:false,dp[index][cur.count].samecount,dp[index][cur.count].sameSum);
+		
+		
+		
+	}
+	
+	private static long getProfitFromCostObject(Cost cost,int c) {
+		try{
+			long amount=0;
+		
+		PriorityQueue<Node> pq1=new PriorityQueue<Node>(cost.pq.size(),(n1,n2)-> {
+			return Long.compare(n2.profit, n1.profit);
+		});
+		for(Node node:cost.pq) {
+			pq1.add(node);
+		}
+		while(c>0 && !pq1.isEmpty()) {
+			Node p=pq1.poll();
+			amount+=getCurrentProfit(p);
+			reduceline(p);
+			if(p.count>=3)
+				p.profit=getCurrentProfit(p);
+				pq1.add(p);
+			--c;
+		}
+		
+		return amount;
+		
+		}catch(Exception e) {
+			System.out.println(e);
+			return 0;
+		}
 	}
 	
 	
-	private static int reduceline(Node cur) {
+	private static int reduceline(Node cur) throws Exception{
 		int edgeDelete=findSmallestNumSlope(cur);
 		
 		if(cur.slopes.get(edgeDelete)==1) {
@@ -341,7 +502,7 @@ class Color2 {
 		return edgeDelete;
 	}
 	
-	private static void revertremovedLine(Node cur ,int edgeDelete) {
+	private static void revertremovedLine(Node cur ,int edgeDelete) throws Exception{
 		cur.count++;
 		if(cur.slopes.containsKey(edgeDelete)) {
 			cur.slopes.put(edgeDelete,cur.slopes.get(edgeDelete)+1);
@@ -349,11 +510,12 @@ class Color2 {
 		else {
 			cur.slopes.put(edgeDelete,1);
 		}
-		
+		cur.profit=getCurrentProfit(cur);
 	}
 	
 	
-	private static long getTrianglesParallel(Map<Integer,Integer> slopes) {
+	
+	private static long getTrianglesParallel(Map<Integer,Integer> slopes) throws Exception{
 		List<Integer> temp=new ArrayList<Integer>(200);
 		for(Map.Entry<Integer, Integer> entry:slopes.entrySet()) {
 			//if(entry.getValue()>0)
@@ -381,43 +543,44 @@ class Color2 {
 		return sum3;
 	}
 	
-	private static long getTotal(Node node) {
-		if(node.count==node.slopes.size()) {
+	private static long getTotal(Node node) throws Exception{
+		if(node !=null && (node.count==node.slopes.size())) {
 			return getncr(node.count, 3);
 		}
-		else {
-			return getTrianglesParallel(node.slopes);
-		}
+		
+		return 0;
+//		else {
+//			return getTrianglesParallel(node.slopes);
+//		}
 	}
 	
 	
-	private static long getCurrentProfit(Node node) {
-		if(node.count==node.slopes.size()) {
+	private static long getCurrentProfit(Node node)throws Exception{
+		if(node!=null && node.count==node.slopes.size()) {
 			return getncr(node.count-1, 2);
 		}
-		else {
-			//calculate the maxProfit achievavle by deleting line from map which contains the min number of lines
-			
-			int deletEdge=findSmallestNumSlope(node);
-			Map<Integer,Integer> temp=node.slopes;
-			long prev=getTrianglesParallel(node.slopes);
-			int deleteCount=temp.get(deletEdge);
-			node.slopes.put(deletEdge, deleteCount-1);
-			long nowcost=getTrianglesParallel(node.slopes);
-			node.slopes.put(deletEdge, deleteCount);
-			return prev-nowcost;
-		}
+		return 0;
+//		else {
+//			//calculate the maxProfit achievavle by deleting line from map which contains the min number of lines
+//			
+//			int deletEdge=findSmallestNumSlope(node);
+//			Map<Integer,Integer> temp=node.slopes;
+//			long prev=getTrianglesParallel(node.slopes);
+//			int deleteCount=temp.get(deletEdge);
+//			node.slopes.put(deletEdge, deleteCount-1);
+//			long nowcost=getTrianglesParallel(node.slopes);
+//			node.slopes.put(deletEdge, deleteCount);
+//			return prev-nowcost;
+//		}
 	}
 	
-	private static int findSmallestNumSlope(Node node) {
-		
-//		if(node.count==node.slopes.size()) {
-//			for(Map.Entry<Integer, Integer> entry:node.slopes.entrySet()) {
-//				return entry.getKey();
-//			}
-//		}
-					
-		
+	private static int findSmallestNumSlope(Node node) throws Exception{
+		if(node.count==node.slopes.size()) {
+			for(Map.Entry<Integer, Integer> entry:node.slopes.entrySet()) {
+				return entry.getKey();
+			}
+			
+		}
 		
 		int minSlope=-1;
 		int minSlopeCount=Integer.MAX_VALUE;
@@ -452,14 +615,8 @@ class Color2 {
 	    return res; 
 	}
 	
-	private static long getRemovedCountNoParallel(int size,int k,int cost) {
-		
-		int count=k/cost;
-		
-		return getncr(size-count, 3);
-	}
 	
-	private static long getRemovedCountParallel(Node node,int k) {
+private static long getRemovedCountParallel(Node node,int k) throws Exception{
 		int count=k/node.cost;
 		PriorityQueue<Slope> pq=new PriorityQueue<Slope>(100,(n1,n2)-> {
 			return n1.count-n2.count;
@@ -485,7 +642,7 @@ class Color2 {
 		
 	}
 	
-	static class Slope{
+static class Slope{
 		int index;
 		int count;
 		Slope(int i,int c){
@@ -493,6 +650,7 @@ class Color2 {
 			count=c;
 		}
 	}
+	
 	
 	
 	

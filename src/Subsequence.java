@@ -121,65 +121,9 @@ class Subsequence {
 		}
 		Collections.sort(keys);
 		
-		for(int i=0;i<keys.size();++i) {
-			int num=keys.get(i);
-			//now for each num the maxLen we can possible achieve = Max(2*countNum,n)
-			int countNum=arr.get(num);
-			long sum=countNum;
-			int maxLen=(2*countNum<n)?2*countNum:n;
-			for(int len=2;len<=maxLen;++len) {
-				if(len%2==0) {
-					int r=len/2;// r is the number of num key needed in this combination
-					long subSum=0;
-					while(r<=len && r<=countNum) {
-						long rightPart=0;
-						if(r==len-r) {
-							//ncr-all ways i can select len-r out of other nums less than the current num 
-							rightPart=getncr(totalNum-countNum, len-r);
-							long sub=0;
-							for(int j=0;j<i;++j) {
-								int numLess=arr.get(keys.get(j));
-								sub=(sub+getncr(numLess,len-r))%mod;
-							}
-							rightPart=(rightPart-sub+mod)%mod;
-							subSum=(subSum+(getncr(countNum,r)*rightPart)%mod)%mod;
-							
-						}
-						else {
-							subSum=(subSum+(getncr(countNum,r)*getncr(totalNum-countNum,len-r))%mod)%mod;
-						}
-						++r;
-					}
-					
-					sum=(sum+subSum)%mod;
-				}
-				else {
-					// we start calculating from len/2+1 to all len
-					int r=len/2+1;
-					long subSum=0;
-					while(r<=len && r<=countNum) {
-						subSum=(subSum+(getncr(countNum,r)*getncr(totalNum-countNum,len-r))%mod)%mod;
-						++r;
-					}
-					sum=(sum+subSum)%mod;
-				}
-			}
-			
-			//now will have to consider all 1 time possible case which is all elemnets larger that this taken 1 at a time
 			
 			
-			
-			long numPrev=countNum*
-			if(keys.size()-i>=3) {
-				int j=3;
-				
-				
-			}
-			
-			ans[num]=sum;
-			
-			
-		}
+		
 		for(int i=1;i<=n;++i) {
 			sb.append(Long.toString(ans[i])+" ");
 			
